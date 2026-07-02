@@ -1,6 +1,6 @@
 // NASH DJ QR 1.0 FINAL
 // IMPORTANT: remplace le texte ci-dessous par ton URL Google Apps Script Web App qui finit par /exec
-const BACKEND_URL = "COLLE_TON_URL_GOOGLE_APPS_SCRIPT_ICI";
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyfJnt2TfmX0CsNvdyPjPLvwlraCfjTJ0rjKCkcuCh4ulwbX-3palXHqWZ3DDvqoS5_og/exec";
 
 const DEFAULT_STATE={liveDj:"6pac",eventName:"Soirée au Nash",eventDesc:"Scanne, écris ta demande, et le DJ la reçoit.",posterUrl:"",djs:[{id:"6pac",name:"DJ 6PaC",pass:"nashdj",photo:""},{id:"frank",name:"DJ Frank",pass:"frankdj",photo:""},{id:"lamb3rt",name:"DJ LAMB3RT",pass:"lamb3rtdj",photo:""}],requests:[]};
 function localGet(){return JSON.parse(localStorage.getItem("nashDjQrState")||JSON.stringify(DEFAULT_STATE))}function localSet(s){localStorage.setItem("nashDjQrState",JSON.stringify(s))}
