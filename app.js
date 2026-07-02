@@ -1,6 +1,6 @@
 // DJ NASH SYNC - Correction formulaire + Google Apps Script sans refresh
 // Colle l'URL de ton Web App Google ici :
-const BACKEND_URL = "REMPLACE_PAR_TON_URL_GOOGLE_APPS_SCRIPT";
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyfJnt2TfmX0CsNvdyPjPLvwlraCfjTJ0rjKCkcuCh4ulwbX-3palXHqWZ3DDvqoS5_og/exec";
 
 const DEFAULT_STATE = {
   liveDj: "6pac",
