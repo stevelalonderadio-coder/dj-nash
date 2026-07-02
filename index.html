@@ -14,10 +14,11 @@
   </header>
   <main class="wrap">
     <section class="hero card glow-card">
-      <div class="pill live"><i></i> EN DIRECT</div>
-      <h1 id="liveDj">DJ 6PaC</h1>
+      <div class="live-layout"><img id="livePhoto" class="dj-big-photo hidden" alt="Photo du DJ"><div><div class="pill live"><i></i> EN DIRECT</div>
+      <h1 id="liveDj">DJ 6PaC</h1></div></div>
       <h2 id="liveEvent">Soirée au Nash</h2>
       <p>Scanne, écris ta demande, et le DJ la reçoit.</p>
+    <img id="eventPoster" class="event-poster hidden" alt="Affiche de la soirée">
     </section>
     <section class="card form-card">
       <h2>Envoie ta demande</h2>
@@ -29,12 +30,6 @@
         <button class="btn primary" type="submit">Envoyer au DJ</button>
       </form>
       <p id="status" class="status"></p>
-        <button id="enableClientSound" class="btn ghost" type="button">Activer la sonnerie quand ma demande joue</button>
-    </section>
-    <section class="card">
-      <h2>Suivi de mes demandes</h2>
-      <p class="hint">Garde cette page ouverte. Quand le DJ marque ta demande comme jouée, une alerte lumineuse apparaît ici.</p>
-      <div id="clientRequests" class="requests"></div>
     </section>
   </main>
   <script src="app.js"></script>
