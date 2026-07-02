@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DJ NASH | Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg"></div>
+  <header class="topbar">
+    <div class="brand">DJ NASH</div>
+    <nav>
+      <a href="./index.html">Client</a>
+      <a href="./dj.html">DJ</a>
+      <a href="./admin.html">Admin</a>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section id="adminLoginCard" class="card glow">
+      <h1>Admin Steve / 6PaC</h1>
+      <form id="adminLogin" class="form">
+        <label>Mot de passe admin
+          <input id="adminPass" type="password" required placeholder="Mot de passe admin" />
+        </label>
+        <button type="submit">Entrer Admin</button>
+      </form>
+      <p id="adminError" class="error hidden">Mot de passe incorrect.</p>
+    </section>
+
+    <section id="adminPanel" class="hidden">
+      <section class="card glow">
+        <h1>Panneau Administrateur</h1>
+        <p>Tu es le seul admin. Les DJs peuvent seulement prendre le contrôle et lire les demandes.</p>
+      </section>
+
+      <section class="card">
+        <h2>Soirée en cours</h2>
+        <form id="liveSettings" class="form grid2">
+          <label>DJ en direct
+            <select id="liveDj"></select>
+          </label>
+          <label>Nom de la soirée
+            <input id="eventName" maxlength="50" placeholder="Ex: Summer Glow" />
+          </label>
+          <button type="submit">Mettre en direct</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Gérer les DJs</h2>
+        <div id="djAdminList" class="requests"></div>
+        <form id="addDjForm" class="form grid3">
+          <input id="newDjName" placeholder="Nom DJ" required />
+          <input id="newDjPass" placeholder="Mot de passe" required />
+          <button type="submit">Ajouter DJ</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="row between">
+          <h2>Toutes les demandes</h2>
+          <button id="clearAll" class="danger">Effacer demandes</button>
+        </div>
+        <div id="adminRequests" class="requests"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>DJNash.initAdmin();</script>
+</body>
+</html>
