@@ -1,18 +1,17 @@
-DJ NASH ALL IN
+DJ NASH V4 - Admin DJ invité + photos
 
-Fichiers à envoyer sur GitHub Pages:
-- index.html
-- dj.html
-- admin.html
-- style.css
-- app.js
-- README.txt
-
-Mots de passe:
+Mots de passe de départ:
 Admin: nashadmin
 DJ 6PaC: nashdj
 DJ Frank: frankdj
 DJ LAMB3RT: lamb3rtdj
 
-Note importante:
-Cette version fonctionne en localStorage dans le navigateur. Pour recevoir les demandes entre plusieurs téléphones/laptops en vrai temps réel, il faudra brancher Google Apps Script / Google Sheets ou Firebase. Le design et les panneaux sont prêts.
+Nouveau:
+- Steve est seul admin.
+- L'admin peut créer des DJ invités.
+- L'admin peut modifier / désactiver / supprimer des DJ.
+- Chaque DJ peut avoir une photo personnalisée.
+- Pas de fonction chanson en direct pour l'instant, comme demandé.
+
+Important:
+Cette version fonctionne avec le stockage local du navigateur pour la maquette/prototype. Pour que les clients et le laptop DJ partagent les demandes en vrai sur Internet, il faut brancher Google Sheets / Apps Script à l'étape suivante.
