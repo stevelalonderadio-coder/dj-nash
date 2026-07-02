@@ -1,31 +1,171 @@
-const ADMIN_PASS = "nashadmin";
-const DEFAULT_DJS = [
-  {name:"DJ 6PaC", login:"6pac", pass:"nashdj", active:true, photo:""},
-  {name:"DJ Frank", login:"frank", pass:"frankdj", active:true, photo:""},
-  {name:"DJ LAMB3RT", login:"lamb3rt", pass:"lamb3rtdj", active:true, photo:""}
-];
-const store = {
-  get djs(){return JSON.parse(localStorage.getItem('djNashDjs')||JSON.stringify(DEFAULT_DJS))},
-  set djs(v){localStorage.setItem('djNashDjs',JSON.stringify(v)); refreshAll()},
-  get live(){return JSON.parse(localStorage.getItem('djNashLive')||'{"dj":"DJ 6PaC","event":"Soirée au Nash","poster":""}')},
-  set live(v){localStorage.setItem('djNashLive',JSON.stringify(v)); refreshAll()},
-  get requests(){return JSON.parse(localStorage.getItem('djNashRequests')||'[]')},
-  set requests(v){localStorage.setItem('djNashRequests',JSON.stringify(v)); refreshAll()}
+// DJ NASH SYNC
+// 1) Crée ton Google Apps Script avec le code dans GOOGLE_APPS_SCRIPT.txt
+// 2) Déploie en Web App
+// 3) Colle l'URL ici :
+const BACKEND_URL = "";
+
+const DEFAULT_STATE = {
+  liveDj: "6pac",
+  eventName: "Soirée au Nash",
+  eventDesc: "Scanne, écris ta demande, et le DJ la reçoit.",
+  posterUrl: "",
+  djs: [
+    { id:"6pac", name:"DJ 6PaC", pass:"nashdj", photo:"" },
+    { id:"frank", name:"DJ Frank", pass:"frankdj", photo:"" },
+    { id:"lamb3rt", name:"DJ LAMB3RT", pass:"lamb3rtdj", photo:"" }
+  ],
+  requests: []
 };
-function $(id){return document.getElementById(id)}
-function esc(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
-function activeDjs(){return store.djs.filter(d=>d.active)}
-function getDj(name){return store.djs.find(d=>d.name===name)||store.djs[0]||DEFAULT_DJS[0]}
-function fillDjSelect(id){const el=$(id); if(!el)return; const current=el.value||store.live.dj; el.innerHTML=activeDjs().map(d=>`<option value="${esc(d.name)}">${esc(d.name)}</option>`).join(''); if([...el.options].some(o=>o.value===current)) el.value=current;}
-function updateLive(){const l=store.live, dj=getDj(l.dj); ['liveDj','djCurrent','profileDjName'].forEach(id=>$(id)&&($(id).textContent=l.dj)); ['liveEvent','eventCurrent'].forEach(id=>$(id)&&($(id).textContent=l.event)); if($('adminDj')){$('adminDj').value=l.dj;} if($('adminEvent')) $('adminEvent').value=l.event; ['livePhoto','djPhoto','profilePhotoPreview'].forEach(id=>{const img=$(id); if(img){img.src=dj.photo||''; img.classList.toggle('hidden',!dj.photo)}}); ['eventPoster','adminPosterPreview'].forEach(id=>{const img=$(id); if(img){img.src=l.poster||''; img.classList.toggle('hidden',!l.poster)}})}
-function addRequest(r){const list=store.requests; list.unshift({...r,id:Date.now(),time:new Date().toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}),played:false}); store.requests=list;}
-function renderRequests(targetId){const el=$(targetId); if(!el)return; const reqs=store.requests; el.innerHTML=reqs.length?'':'<p class="hint">Aucune demande pour le moment.</p>'; reqs.forEach(r=>{const d=document.createElement('div'); d.className='req '+(r.played?'played':''); d.innerHTML=`<strong>${esc(r.type)}</strong><br><small>${esc(r.time)} • ${esc(r.name||'Client')} ${r.table?'• '+esc(r.table):''}</small><p>${esc(r.message)}</p><div class="req-actions"><button class="btn ghost" data-play="${r.id}">✓ Jouée</button><button class="btn ghost" data-del="${r.id}">Supprimer</button></div>`; el.appendChild(d);}); el.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{store.requests=store.requests.map(r=>r.id==b.dataset.play?{...r,played:true}:r)}); el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{store.requests=store.requests.filter(r=>r.id!=b.dataset.del)});}
-function renderDjList(){const el=$('djManager'); if(!el)return; el.innerHTML=store.djs.map((d,i)=>`<div class="djrow"><div>${d.photo?`<img src="${d.photo}" class="avatar">`:''}<b>${esc(d.name)}</b><small>${esc(d.login)} • ${d.active?'Actif':'Désactivé'}</small></div><div><button class="btn ghost" data-edit="${i}">Modifier</button><button class="btn ghost" data-toggle="${i}">${d.active?'Désactiver':'Activer'}</button><button class="btn ghost" data-del-dj="${i}">Supprimer</button></div></div>`).join(''); el.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{let a=store.djs; a[b.dataset.toggle].active=!a[b.dataset.toggle].active; store.djs=a;}); el.querySelectorAll('[data-del-dj]').forEach(b=>b.onclick=()=>{if(confirm('Supprimer ce DJ?')){let a=store.djs; a.splice(b.dataset.delDj,1); store.djs=a;}}); el.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>loadDjForm(+b.dataset.edit));}
-function loadDjForm(i){const d=store.djs[i]; $('djIndex').value=i; $('newDjName').value=d.name; $('newDjLogin').value=d.login; $('newDjPass').value=d.pass; $('newDjActive').checked=d.active; $('photoPreview').src=d.photo||''; $('photoPreview').classList.toggle('hidden',!d.photo);}
-function readPhoto(input, cb){const f=input.files&&input.files[0]; if(!f){cb(null);return} const r=new FileReader(); r.onload=()=>cb(r.result); r.readAsDataURL(f);}
-function initClient(){updateLive(); $('requestForm')?.addEventListener('submit',e=>{e.preventDefault(); addRequest({name:$('clientName').value,type:$('requestType').value,table:$('tableNumber').value,message:$('message').value}); $('status').textContent='Demande envoyée au DJ ✅'; e.target.reset();});}
-function initDj(){fillDjSelect('djName'); updateLive(); renderRequests('requestsList'); let currentLogin=''; $('djLogin')?.addEventListener('submit',e=>{e.preventDefault(); const djName=$('djName').value, pass=$('djPass').value; const dj=getDj(djName); if(!dj||dj.pass!==pass){alert('Mot de passe incorrect'); return;} currentLogin=dj.login; store.live={...store.live,dj:dj.name}; $('djProfilePanel')?.classList.remove('hidden'); $('profileDjName')&&($('profileDjName').textContent=dj.name); $('profilePhotoPreview')&&($('profilePhotoPreview').src=dj.photo||''); $('profilePhotoPreview')?.classList.toggle('hidden',!dj.photo); alert(`${dj.name} est maintenant en direct`);}); $('profilePhotoInput')?.addEventListener('change',e=>readPhoto(e.target,data=>{if(!data||!currentLogin)return; let a=store.djs; const idx=a.findIndex(d=>d.login===currentLogin); if(idx<0)return; a[idx].photo=data; store.djs=a; if(store.live.dj===a[idx].name) store.live={...store.live,dj:a[idx].name}; alert('Photo DJ mise à jour');})); $('clearPlayed')?.addEventListener('click',()=>{store.requests=store.requests.filter(r=>!r.played)});}
-function initAdmin(){fillDjSelect('adminDj'); updateLive(); renderRequests('adminRequests'); renderDjList(); $('adminLogin')?.addEventListener('submit',e=>{e.preventDefault(); if($('adminPass').value!==ADMIN_PASS){alert('Mot de passe admin incorrect'); return;} $('adminPanel').classList.remove('hidden');}); $('saveLive')?.addEventListener('click',()=>{store.live={...store.live,dj:$('adminDj').value,event:$('adminEvent').value||'Soirée au Nash'}; alert('Soirée mise en direct');}); $('eventPosterInput')?.addEventListener('change',e=>readPhoto(e.target,data=>{if(data){store.live={...store.live,poster:data}; alert('Affiche de soirée ajoutée');}})); $('removePoster')?.addEventListener('click',()=>{store.live={...store.live,poster:''};}); $('djPhotoInput')?.addEventListener('change',e=>readPhoto(e.target,data=>{if(data){$('photoPreview').src=data;$('photoPreview').classList.remove('hidden')}})); $('djForm')?.addEventListener('submit',e=>{e.preventDefault(); readPhoto($('djPhotoInput'),data=>{let a=store.djs; const idx=$('djIndex').value; const existing=idx!==''?a[+idx]:{}; const obj={name:$('newDjName').value.trim(), login:$('newDjLogin').value.trim(), pass:$('newDjPass').value, active:$('newDjActive').checked, photo:data||existing.photo||''}; if(!obj.name||!obj.login||!obj.pass){alert('Remplis nom, identifiant et mot de passe');return;} if(idx==='') a.push(obj); else a[+idx]=obj; store.djs=a; e.target.reset(); $('djIndex').value=''; $('photoPreview').classList.add('hidden');});}); $('resetDjForm')?.addEventListener('click',()=>{$('djForm').reset(); $('djIndex').value=''; $('photoPreview').classList.add('hidden');});}
-function refreshAll(){fillDjSelect('adminDj'); fillDjSelect('djName'); updateLive(); renderRequests('requestsList'); renderRequests('adminRequests'); renderDjList();}
-window.addEventListener('storage',refreshAll);
-const page=document.body.dataset.page; if(page==='client')initClient(); if(page==='dj')initDj(); if(page==='admin')initAdmin();
+
+function localGet(){ return JSON.parse(localStorage.getItem("djNashState") || JSON.stringify(DEFAULT_STATE)); }
+function localSet(s){ localStorage.setItem("djNashState", JSON.stringify(s)); }
+
+async function api(action, data={}){
+  if(!BACKEND_URL){
+    const s = localGet();
+    if(action==="getState") return s;
+    if(action==="saveState"){ localSet(data.state); return {ok:true}; }
+    if(action==="addRequest"){ s.requests.unshift({...data, time:new Date().toLocaleString()}); localSet(s); return {ok:true}; }
+    return {ok:false};
+  }
+  const res = await fetch(BACKEND_URL, {
+    method:"POST",
+    body: JSON.stringify({action, ...data})
+  });
+  return await res.json();
+}
+
+function setBg(el, url){
+  if(!el) return;
+  el.style.backgroundImage = url ? `url("${url}")` : "";
+}
+
+async function getState(){ return await api("getState"); }
+async function saveState(state){ return await api("saveState", {state}); }
+
+async function startClientPage(){
+  const state = await getState();
+  const dj = state.djs.find(d=>d.id===state.liveDj) || state.djs[0];
+  document.getElementById("liveDj").textContent = dj.name;
+  document.getElementById("eventName").textContent = state.eventName;
+  document.getElementById("eventDesc").textContent = state.eventDesc || "Scanne, écris ta demande, et le DJ la reçoit.";
+  setBg(document.getElementById("djPhoto"), dj.photo);
+
+  const posterBox = document.getElementById("eventPosterBox");
+  const poster = document.getElementById("eventPoster");
+  if(state.posterUrl){ poster.src = state.posterUrl; posterBox.classList.remove("hidden"); }
+
+  document.getElementById("requestForm").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    await api("addRequest", {
+      clientName: document.getElementById("clientName").value,
+      type: document.getElementById("requestType").value,
+      message: document.getElementById("requestMsg").value,
+      status:"new"
+    });
+    document.getElementById("statusMsg").textContent = "Demande envoyée au DJ ✅";
+    e.target.reset();
+  });
+}
+
+let currentDj = null;
+
+async function startDjPage(){}
+async function djLogin(){
+  const state = await getState();
+  const user = document.getElementById("djUser").value.trim().toLowerCase();
+  const pass = document.getElementById("djPass").value;
+  const dj = state.djs.find(d=>d.id===user && d.pass===pass);
+  if(!dj){ document.getElementById("loginMsg").textContent = "Accès refusé"; return; }
+  currentDj = dj;
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("djPanel").classList.remove("hidden");
+  document.getElementById("djNameTitle").textContent = dj.name;
+  document.getElementById("photoUrl").value = dj.photo || "";
+  setBg(document.getElementById("profilePreview"), dj.photo);
+  loadRequests();
+}
+
+async function saveDjPhoto(){
+  const state = await getState();
+  const photo = document.getElementById("photoUrl").value.trim();
+  const dj = state.djs.find(d=>d.id===currentDj.id);
+  dj.photo = photo;
+  currentDj.photo = photo;
+  await saveState(state);
+  setBg(document.getElementById("profilePreview"), photo);
+  alert("Photo sauvegardée partout ✅");
+}
+
+async function loadRequests(){
+  const state = await getState();
+  const box = document.getElementById("requestsList");
+  box.innerHTML = "";
+  (state.requests || []).forEach((r,i)=>{
+    const div = document.createElement("div");
+    div.className = "request";
+    div.innerHTML = `<b>${r.clientName || "Client"}</b><br>${r.type}<br>${r.message}<br><small>${r.time || ""}</small>`;
+    box.appendChild(div);
+  });
+}
+
+async function startAdminPage(){}
+async function adminLogin(){
+  const pass = document.getElementById("adminPass").value;
+  if(pass !== "nashadmin"){ document.getElementById("adminMsg").textContent = "Accès refusé"; return; }
+  document.getElementById("adminLoginBox").classList.add("hidden");
+  document.getElementById("adminPanel").classList.remove("hidden");
+  loadAdmin();
+}
+
+async function loadAdmin(){
+  const state = await getState();
+  const sel = document.getElementById("liveDjSelect");
+  sel.innerHTML = "";
+  state.djs.forEach(d=>{
+    const opt = document.createElement("option");
+    opt.value = d.id; opt.textContent = d.name;
+    if(d.id===state.liveDj) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  document.getElementById("eventInput").value = state.eventName;
+  document.getElementById("descInput").value = state.eventDesc || "";
+  document.getElementById("posterInput").value = state.posterUrl || "";
+  loadDjs();
+}
+
+async function saveLiveSettings(){
+  const state = await getState();
+  state.liveDj = document.getElementById("liveDjSelect").value;
+  state.eventName = document.getElementById("eventInput").value;
+  state.eventDesc = document.getElementById("descInput").value;
+  state.posterUrl = document.getElementById("posterInput").value;
+  await saveState(state);
+  alert("Mise en direct sauvegardée ✅");
+}
+
+async function createDj(){
+  const state = await getState();
+  const name = document.getElementById("newDjName").value.trim();
+  const id = document.getElementById("newDjUser").value.trim().toLowerCase();
+  const pass = document.getElementById("newDjPass").value.trim();
+  const photo = document.getElementById("newDjPhoto").value.trim();
+  if(!name || !id || !pass){ alert("Nom, identifiant et mot de passe obligatoires"); return; }
+  state.djs.push({id,name,pass,photo});
+  await saveState(state);
+  alert("DJ créé ✅");
+  loadAdmin();
+}
+
+async function loadDjs(){
+  const state = await getState();
+  const box = document.getElementById("djList");
+  if(!box) return;
+  box.innerHTML = "";
+  state.djs.forEach(d=>{
+    const div = document.createElement("div");
+    div.className = "djrow";
+    div.innerHTML = `<b>${d.name}</b><br>Identifiant: ${d.id}<br>${d.photo ? "Photo: OK" : "Photo: vide"}`;
+    box.appendChild(div);
+  });
+}

@@ -1,37 +1,58 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DJ NASH | Demandes</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body data-page="client">
-  <div class="bg-orbs"></div>
-  <header class="topbar">
-    <div class="brand"><span>DJ</span> NASH</div>
-    <nav><a class="active" href="index.html">Client</a><a href="dj.html">DJ</a><a href="admin.html">Admin</a></nav>
-  </header>
-  <main class="wrap">
-    <section class="hero card glow-card">
-      <div class="live-layout"><img id="livePhoto" class="dj-big-photo hidden" alt="Photo du DJ"><div><div class="pill live"><i></i> EN DIRECT</div>
-      <h1 id="liveDj">DJ 6PaC</h1></div></div>
-      <h2 id="liveEvent">Soirée au Nash</h2>
-      <p>Scanne, écris ta demande, et le DJ la reçoit.</p>
-    <img id="eventPoster" class="event-poster hidden" alt="Affiche de la soirée">
-    </section>
-    <section class="card form-card">
-      <h2>Envoie ta demande</h2>
-      <form id="requestForm">
-        <label>Ton nom<input id="clientName" placeholder="Ex: Steve" required></label>
-        <label>Type de message<select id="requestType"><option>Demande spéciale</option><option>Anniversaire</option><option>Dédicace</option><option>Message au DJ</option></select></label>
-        <label>Table / section <input id="tableNumber" placeholder="Ex: Table 7, bar, piste" ></label>
-        <label>Message / chanson<textarea id="message" placeholder="Ex: Pitbull - Fireball pour la table 7" required></textarea></label>
-        <button class="btn primary" type="submit">Envoyer au DJ</button>
-      </form>
-      <p id="status" class="status"></p>
-    </section>
-  </main>
-  <script src="app.js"></script>
+<body>
+<header>
+  <div class="brand"><span>DJ</span> NASH</div>
+  <nav>
+    <a class="active" href="index.html">Client</a>
+    <a href="dj.html">DJ</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero card">
+    <div id="djPhoto" class="avatar"></div>
+    <div>
+      <div class="live-dot">● EN DIRECT</div>
+      <h1 id="liveDj">DJ 6PaC</h1>
+      <h2 id="eventName">Soirée au Nash</h2>
+      <p id="eventDesc">Scanne, écris ta demande, et le DJ la reçoit.</p>
+    </div>
+  </section>
+
+  <section id="eventPosterBox" class="posterBox hidden">
+    <img id="eventPoster" alt="Affiche de la soirée" />
+  </section>
+
+  <section class="card">
+    <h2>Envoie ta demande</h2>
+    <form id="requestForm">
+      <label>Ton nom</label>
+      <input id="clientName" placeholder="Ex: Steve" required />
+      <label>Type de message</label>
+      <select id="requestType">
+        <option>Demande spéciale</option>
+        <option>Dédicace spéciale</option>
+        <option>Anniversaire</option>
+      </select>
+      <label>Message / chanson</label>
+      <textarea id="requestMsg" placeholder="Ex: Pitbull - Fireball pour la table 7" required></textarea>
+      <button type="submit">Envoyer au DJ</button>
+    </form>
+    <p id="statusMsg" class="status"></p>
+  </section>
+</main>
+
+<script src="app.js"></script>
+<script>
+  startClientPage();
+</script>
 </body>
 </html>

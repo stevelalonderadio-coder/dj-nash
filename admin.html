@@ -1,8 +1,63 @@
-<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DJ NASH | Admin</title><link rel="stylesheet" href="style.css"></head>
-<body data-page="admin"><div class="bg-orbs"></div><header class="topbar"><div class="brand"><span>DJ</span> NASH</div><nav><a href="index.html">Client</a><a href="dj.html">DJ</a><a class="active" href="admin.html">Admin</a></nav></header>
-<main class="wrap grid"><section class="card"><h1>Admin Steve</h1><form id="adminLogin"><label>Mot de passe admin<input id="adminPass" type="password" placeholder="Mot de passe"></label><button class="btn primary">Déverrouiller</button></form><p class="hint">Admin: nashadmin</p></section>
-<section class="card hidden" id="adminPanel"><h2>Contrôle de la soirée</h2><label>DJ en direct<select id="adminDj"></select></label><label>Nom de la soirée<input id="adminEvent" placeholder="Ex: Summer Glow"></label><label>Affiche de la soirée en cours<input id="eventPosterInput" type="file" accept="image/*"></label><img id="adminPosterPreview" class="poster-preview hidden" alt="Aperçu affiche"><div class="req-actions"><button id="saveLive" class="btn primary" type="button">Mettre en direct</button><button id="removePoster" class="btn ghost" type="button">Retirer affiche</button></div><hr>
-<h2>Gestion des DJ</h2><div id="djManager" class="djmanager"></div><hr>
-<h3>Ajouter / modifier un DJ</h3><form id="djForm"><input id="djIndex" type="hidden"><label>Nom DJ<input id="newDjName" placeholder="Ex: DJ MIKILELE"></label><label>Identifiant<input id="newDjLogin" placeholder="Ex: mikilele"></label><label>Mot de passe<input id="newDjPass" placeholder="Mot de passe du DJ"></label><label>Photo du DJ<input id="djPhotoInput" type="file" accept="image/*"></label><img id="photoPreview" class="photo-preview hidden" alt="Aperçu photo"><label class="check"><input id="newDjActive" type="checkbox" checked> DJ actif</label><div class="req-actions"><button class="btn primary">Enregistrer DJ</button><button id="resetDjForm" type="button" class="btn ghost">Nouveau DJ</button></div></form><hr>
-<h2>Demandes</h2><div id="adminRequests" class="requests"></div></section></main><script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DJ NASH | Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header>
+  <div class="brand"><span>DJ</span> NASH</div>
+  <nav>
+    <a href="index.html">Client</a>
+    <a href="dj.html">DJ</a>
+    <a class="active" href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section id="adminLoginBox" class="card">
+    <h1>Admin Steve</h1>
+    <input id="adminPass" type="password" placeholder="Mot de passe admin" />
+    <button onclick="adminLogin()">Entrer</button>
+    <p id="adminMsg" class="status"></p>
+  </section>
+
+  <section id="adminPanel" class="hidden">
+    <section class="card">
+      <h2>Soirée en cours</h2>
+      <label>DJ en direct</label>
+      <select id="liveDjSelect"></select>
+      <label>Nom de la soirée</label>
+      <input id="eventInput" placeholder="Ex: Summer Glow" />
+      <label>Description courte</label>
+      <input id="descInput" placeholder="Ex: Demandes, anniversaires et dédicaces" />
+      <label>Affiche de la soirée</label>
+      <input id="posterInput" placeholder="Lien image de l'affiche" />
+      <button onclick="saveLiveSettings()">Mettre en direct</button>
+    </section>
+
+    <section class="card">
+      <h2>Créer un DJ</h2>
+      <input id="newDjName" placeholder="Nom DJ, ex: DJ MIKILELE" />
+      <input id="newDjUser" placeholder="Identifiant, ex: mikilele" />
+      <input id="newDjPass" placeholder="Mot de passe" />
+      <input id="newDjPhoto" placeholder="Photo URL optionnelle" />
+      <button onclick="createDj()">Créer DJ</button>
+    </section>
+
+    <section class="card">
+      <h2>DJs</h2>
+      <button onclick="loadDjs()">Rafraîchir DJs</button>
+      <div id="djList"></div>
+    </section>
+  </section>
+</main>
+
+<script src="app.js"></script>
+<script>
+  startAdminPage();
+</script>
+</body>
+</html>

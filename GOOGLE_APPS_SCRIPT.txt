@@ -1,2 +1,81 @@
-// À utiliser plus tard pour brancher les demandes en ligne dans Google Sheets.
-// Étape prochaine: on colle ce script dans script.google.com, puis on met son URL dans app.js.
+// DJ NASH BACKEND - Google Apps Script
+// 1. Va sur https://script.google.com
+// 2. Nouveau projet
+// 3. Colle ce code
+// 4. Déployer > Nouveau déploiement > Application Web
+// 5. Exécuter en tant que : Moi
+// 6. Qui a accès : Tout le monde
+// 7. Copie l'URL Web App dans app.js : const BACKEND_URL = "TON_URL";
+
+const SHEET_NAME = "DJ_NASH_DATA";
+
+function getSheet(){
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SHEET_NAME);
+  if(!sh){
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.getRange(1,1).setValue(JSON.stringify(defaultState()));
+  }
+  return sh;
+}
+
+function defaultState(){
+  return {
+    liveDj:"6pac",
+    eventName:"Soirée au Nash",
+    eventDesc:"Scanne, écris ta demande, et le DJ la reçoit.",
+    posterUrl:"",
+    djs:[
+      {id:"6pac",name:"DJ 6PaC",pass:"nashdj",photo:""},
+      {id:"frank",name:"DJ Frank",pass:"frankdj",photo:""},
+      {id:"lamb3rt",name:"DJ LAMB3RT",pass:"lamb3rtdj",photo:""}
+    ],
+    requests:[]
+  };
+}
+
+function readState(){
+  const sh = getSheet();
+  const raw = sh.getRange(1,1).getValue();
+  if(!raw) return defaultState();
+  return JSON.parse(raw);
+}
+
+function writeState(state){
+  getSheet().getRange(1,1).setValue(JSON.stringify(state));
+}
+
+function doPost(e){
+  const data = JSON.parse(e.postData.contents || "{}");
+  let state = readState();
+
+  if(data.action === "getState"){
+    return json(state);
+  }
+
+  if(data.action === "saveState"){
+    writeState(data.state);
+    return json({ok:true});
+  }
+
+  if(data.action === "addRequest"){
+    state.requests = state.requests || [];
+    state.requests.unshift({
+      clientName:data.clientName || "",
+      type:data.type || "Demande spéciale",
+      message:data.message || "",
+      status:data.status || "new",
+      time:new Date().toLocaleString("fr-CA")
+    });
+    writeState(state);
+    return json({ok:true});
+  }
+
+  return json({ok:false,error:"Action inconnue"});
+}
+
+function json(obj){
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
