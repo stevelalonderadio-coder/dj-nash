@@ -1,4 +1,51 @@
-// DJ NASH CONFIG
-// Colle ici l'URL de ton Google Apps Script Web App entre les guillemets.
-// Exemple: const BACKEND_URL = "https://script.google.com/macros/s/XXXXX/exec";
-const BACKEND_URL = "";
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DJ NASH | Demandes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="client">
+  <div class="bg-glow"></div>
+  <header class="topbar">
+    <div class="brand">DJ <span>NASH</span></div>
+    <nav>
+      <a href="index.html">Client</a>
+      <a href="dj.html">DJ</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+  <main class="shell client-shell">
+    <section class="hero-card">
+      <div class="live-pill"><span class="dot"></span> EN DIRECT</div>
+      <h1 id="clientDjName">DJ 6PaC</h1>
+      <h2 id="clientEventName">Soirée au Nash</h2>
+      <p>Scanne, écris ta demande, et le DJ la reçoit.</p>
+    </section>
+
+    <section class="panel">
+      <h3>Envoie ta demande</h3>
+      <form id="requestForm" class="grid-form">
+        <label>Ton nom
+          <input id="requestName" required placeholder="Ex: Steve" maxlength="40" />
+        </label>
+        <label>Type de message
+          <select id="requestType">
+            <option>Demande spéciale</option>
+            <option>Anniversaire</option>
+            <option>Dédicace</option>
+            <option>Message au DJ</option>
+          </select>
+        </label>
+        <label class="full">Message / chanson
+          <textarea id="requestMessage" required placeholder="Ex: Pitbull - Fireball pour la table 7" maxlength="220"></textarea>
+        </label>
+        <button type="submit">Envoyer au DJ</button>
+      </form>
+      <p id="sentMsg" class="success hidden">Demande envoyée au DJ ✅</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,1 +1,35 @@
-*{box-sizing:border-box}body{margin:0;background:#030306;color:#fff;font-family:Arial,Helvetica,sans-serif;min-height:100vh;overflow-x:hidden}body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 20% 0%,rgba(0,255,210,.18),transparent 34%),radial-gradient(circle at 90% 20%,rgba(255,0,180,.22),transparent 38%),linear-gradient(135deg,#050505,#090012 55%,#020507);z-index:-3}.orb{position:fixed;width:360px;height:360px;border-radius:50%;filter:blur(55px);opacity:.35;z-index:-2}.one{background:#00ffd5;left:-110px;top:150px}.two{background:#ff00c8;right:-140px;bottom:90px}header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);backdrop-filter:blur(10px);position:sticky;top:0;z-index:2}header b{font-size:24px;letter-spacing:2px;text-shadow:0 0 18px #00ffd5}nav a{color:#fff;margin-left:14px;text-decoration:none;opacity:.9}.wrap{width:min(1040px,94vw);margin:28px auto;display:grid;gap:22px}.panel{background:rgba(10,10,18,.78);border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:24px;box-shadow:0 0 35px rgba(0,255,213,.12),inset 0 0 30px rgba(255,255,255,.03)}.hero{text-align:center;padding:38px 20px}h1{font-size:clamp(42px,11vw,86px);margin:12px 0;text-shadow:0 0 22px rgba(0,255,213,.7)}h2{font-size:clamp(26px,6vw,48px);margin:10px 0}.tag{font-size:20px;line-height:1.35;color:#ddd}.pill{display:inline-block;background:linear-gradient(90deg,#00ffd5,#ff00c8);color:#010101;font-weight:900;border-radius:999px;padding:8px 14px;letter-spacing:1px}label{display:block;margin:14px 0;font-weight:800}input,select,textarea{width:100%;margin-top:7px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:#11111a;color:white;padding:14px;font-size:17px}textarea{min-height:105px}button{border:0;border-radius:999px;padding:14px 20px;background:linear-gradient(90deg,#00ffd5,#ff00c8);color:#020202;font-weight:900;font-size:16px;cursor:pointer;box-shadow:0 0 24px rgba(255,0,200,.22)}.hidden{display:none}.list{display:grid;gap:12px;margin-top:16px}.item{padding:14px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}.muted{color:#bbb}#status,#adminStatus,#loginStatus{font-weight:900}a{color:#7fffe9}@media(max-width:640px){header{align-items:flex-start;gap:8px;flex-direction:column}nav a{margin-left:0;margin-right:12px}.panel{padding:18px}.tag{font-size:18px}}
+const DJ_NASH = {
+  adminPassword: 'nashadmin',
+  djs: {
+    '6pac': { name: 'DJ 6PaC', password: 'nashdj' },
+    'frank': { name: 'DJ Frank', password: 'frankdj' },
+    'lamb3rt': { name: 'DJ LAMB3RT', password: 'lamb3rtdj' }
+  }
+};
+const $ = (id)=>document.getElementById(id);
+const page = document.body.dataset.page;
+function getState(){return JSON.parse(localStorage.getItem('djNashState')||'{"currentDj":"DJ 6PaC","eventName":"Soirée au Nash","requests":[]}')}
+function setState(s){localStorage.setItem('djNashState',JSON.stringify(s));}
+function renderLive(){const s=getState(); if($('clientDjName')) $('clientDjName').textContent=s.currentDj; if($('clientEventName')) $('clientEventName').textContent=s.eventName; if($('djDashName')) $('djDashName').textContent=s.currentDj; if($('djDashEvent')) $('djDashEvent').textContent=s.eventName;}
+function addRequest(req){const s=getState(); s.requests.unshift(req); setState(s)}
+function renderRequests(targetId){const el=$(targetId); if(!el)return; const s=getState(); if(!s.requests.length){el.innerHTML='<p class="muted">Aucune demande pour l’instant.</p>';return;} el.innerHTML=s.requests.map((r,i)=>`<div class="request-card ${r.played?'played':''}"><div class="meta">${r.time} • ${r.type}</div><h3>${escapeHtml(r.name)}</h3><p>${escapeHtml(r.message)}</p><button onclick="markPlayed(${i})">${r.played?'Remettre en attente':'Jouée ✅'}</button></div>`).join('')}
+function markPlayed(i){const s=getState(); s.requests[i].played=!s.requests[i].played; setState(s); renderRequests('requestsList'); renderRequests('adminRequests')}
+function escapeHtml(str){return String(str).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+if(page==='client'){
+  renderLive();
+  $('requestForm').addEventListener('submit',e=>{e.preventDefault(); addRequest({name:$('requestName').value.trim(),type:$('requestType').value,message:$('requestMessage').value.trim(),time:new Date().toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'}),played:false}); $('requestForm').reset(); $('sentMsg').classList.remove('hidden'); setTimeout(()=>$('sentMsg').classList.add('hidden'),3500);});
+}
+if(page==='dj'){
+  $('djLoginBtn').onclick=()=>{const key=$('djSelect').value; if($('djPassword').value===DJ_NASH.djs[key].password){sessionStorage.setItem('djNashDj',key); $('djLogin').classList.add('hidden'); $('djDashboard').classList.remove('hidden'); renderLive(); renderRequests('requestsList')}else $('djLoginError').classList.remove('hidden')};
+  $('djLogoutBtn').onclick=()=>{sessionStorage.removeItem('djNashDj'); location.reload()};
+  if(sessionStorage.getItem('djNashDj')){$('djLogin').classList.add('hidden'); $('djDashboard').classList.remove('hidden'); renderLive(); renderRequests('requestsList')}
+  setInterval(()=>renderRequests('requestsList'),2000);
+}
+if(page==='admin'){
+  $('adminLoginBtn').onclick=()=>{if($('adminPassword').value===DJ_NASH.adminPassword){sessionStorage.setItem('djNashAdmin','yes'); openAdmin()}else $('adminLoginError').classList.remove('hidden')};
+  $('adminLogoutBtn').onclick=()=>{sessionStorage.removeItem('djNashAdmin'); location.reload()};
+  function openAdmin(){const s=getState(); $('adminLogin').classList.add('hidden'); $('adminDashboard').classList.remove('hidden'); $('adminCurrentDj').value=s.currentDj; $('adminEventName').value=s.eventName; renderRequests('adminRequests')}
+  $('saveLiveBtn').onclick=()=>{const s=getState(); s.currentDj=$('adminCurrentDj').value; s.eventName=$('adminEventName').value||'Soirée au Nash'; setState(s); $('adminSaved').classList.remove('hidden'); setTimeout(()=>$('adminSaved').classList.add('hidden'),3000)};
+  if(sessionStorage.getItem('djNashAdmin')) openAdmin();
+  setInterval(()=>renderRequests('adminRequests'),2000);
+}
