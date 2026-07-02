@@ -1,8 +1,6 @@
-// DJ NASH SYNC
-// 1) Crée ton Google Apps Script avec le code dans GOOGLE_APPS_SCRIPT.txt
-// 2) Déploie en Web App
-// 3) Colle l'URL ici :
-const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyfJnt2TfmX0CsNvdyPjPLvwlraCfjTJ0rjKCkcuCh4ulwbX-3palXHqWZ3DDvqoS5_og/exec";
+// DJ NASH SYNC - Correction formulaire + Google Apps Script sans refresh
+// Colle l'URL de ton Web App Google ici :
+const BACKEND_URL = "REMPLACE_PAR_TON_URL_GOOGLE_APPS_SCRIPT";
 
 const DEFAULT_STATE = {
   liveDj: "6pac",
@@ -17,22 +15,63 @@ const DEFAULT_STATE = {
   requests: []
 };
 
-function localGet(){ return JSON.parse(localStorage.getItem("djNashState") || JSON.stringify(DEFAULT_STATE)); }
-function localSet(s){ localStorage.setItem("djNashState", JSON.stringify(s)); }
+function localGet(){
+  return JSON.parse(localStorage.getItem("djNashState") || JSON.stringify(DEFAULT_STATE));
+}
+function localSet(state){
+  localStorage.setItem("djNashState", JSON.stringify(state));
+}
 
-async function api(action, data={}){
-  if(!BACKEND_URL){
-    const s = localGet();
-    if(action==="getState") return s;
-    if(action==="saveState"){ localSet(data.state); return {ok:true}; }
-    if(action==="addRequest"){ s.requests.unshift({...data, time:new Date().toLocaleString()}); localSet(s); return {ok:true}; }
-    return {ok:false};
-  }
-  const res = await fetch(BACKEND_URL, {
-    method:"POST",
-    body: JSON.stringify({action, ...data})
+function jsonp(action, data = {}){
+  return new Promise((resolve, reject) => {
+    if(!BACKEND_URL || BACKEND_URL.includes("REMPLACE_PAR_TON_URL")){
+      const s = localGet();
+      if(action === "getState") return resolve(s);
+      if(action === "saveState"){ localSet(data.state); return resolve({ok:true}); }
+      if(action === "addRequest"){
+        s.requests.unshift({
+          id: Date.now().toString(),
+          clientName: data.clientName || "",
+          type: data.type || "Demande spéciale",
+          message: data.message || "",
+          status: "new",
+          time: new Date().toLocaleString("fr-CA")
+        });
+        localSet(s);
+        return resolve({ok:true});
+      }
+    }
+
+    const cb = "djNashCb_" + Date.now() + "_" + Math.floor(Math.random() * 99999);
+    window[cb] = (response) => {
+      delete window[cb];
+      script.remove();
+      resolve(response);
+    };
+
+    const params = new URLSearchParams({
+      action,
+      callback: cb,
+      payload: JSON.stringify(data)
+    });
+
+    const script = document.createElement("script");
+    script.src = BACKEND_URL + "?" + params.toString();
+    script.onerror = () => {
+      delete window[cb];
+      script.remove();
+      reject(new Error("Erreur de connexion backend"));
+    };
+    document.body.appendChild(script);
   });
-  return await res.json();
+}
+
+async function getState(){
+  return await jsonp("getState");
+}
+
+async function saveState(state){
+  return await jsonp("saveState", {state});
 }
 
 function setBg(el, url){
@@ -40,43 +79,71 @@ function setBg(el, url){
   el.style.backgroundImage = url ? `url("${url}")` : "";
 }
 
-async function getState(){ return await api("getState"); }
-async function saveState(state){ return await api("saveState", {state}); }
-
 async function startClientPage(){
-  const state = await getState();
-  const dj = state.djs.find(d=>d.id===state.liveDj) || state.djs[0];
-  document.getElementById("liveDj").textContent = dj.name;
-  document.getElementById("eventName").textContent = state.eventName;
-  document.getElementById("eventDesc").textContent = state.eventDesc || "Scanne, écris ta demande, et le DJ la reçoit.";
-  setBg(document.getElementById("djPhoto"), dj.photo);
+  try{
+    const state = await getState();
+    const dj = (state.djs || DEFAULT_STATE.djs).find(d => d.id === state.liveDj) || DEFAULT_STATE.djs[0];
 
-  const posterBox = document.getElementById("eventPosterBox");
-  const poster = document.getElementById("eventPoster");
-  if(state.posterUrl){ poster.src = state.posterUrl; posterBox.classList.remove("hidden"); }
+    document.getElementById("liveDj").textContent = dj.name;
+    document.getElementById("eventName").textContent = state.eventName || "Soirée au Nash";
+    document.getElementById("eventDesc").textContent = state.eventDesc || "Scanne, écris ta demande, et le DJ la reçoit.";
+    setBg(document.getElementById("djPhoto"), dj.photo);
 
-  document.getElementById("requestForm").addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    await api("addRequest", {
-      clientName: document.getElementById("clientName").value,
-      type: document.getElementById("requestType").value,
-      message: document.getElementById("requestMsg").value,
-      status:"new"
-    });
-    document.getElementById("statusMsg").textContent = "Demande envoyée au DJ ✅";
-    e.target.reset();
-  });
+    const posterBox = document.getElementById("eventPosterBox");
+    const poster = document.getElementById("eventPoster");
+    if(posterBox && poster && state.posterUrl){
+      poster.src = state.posterUrl;
+      posterBox.classList.remove("hidden");
+    }
+
+    const form = document.getElementById("requestForm");
+    if(form){
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const button = form.querySelector("button");
+        const status = document.getElementById("statusMsg");
+        button.disabled = true;
+        button.textContent = "Envoi...";
+        status.textContent = "";
+
+        try{
+          await jsonp("addRequest", {
+            clientName: document.getElementById("clientName").value,
+            type: document.getElementById("requestType").value,
+            message: document.getElementById("requestMsg").value
+          });
+
+          status.textContent = "Demande envoyée au DJ ✅";
+          form.reset();
+        }catch(err){
+          status.textContent = "Erreur d'envoi. Réessaie.";
+        }
+
+        button.disabled = false;
+        button.textContent = "Envoyer au DJ";
+      });
+    }
+  }catch(err){
+    console.error(err);
+  }
 }
 
 let currentDj = null;
 
-async function startDjPage(){}
+function startDjPage(){}
+
 async function djLogin(){
   const state = await getState();
   const user = document.getElementById("djUser").value.trim().toLowerCase();
   const pass = document.getElementById("djPass").value;
-  const dj = state.djs.find(d=>d.id===user && d.pass===pass);
-  if(!dj){ document.getElementById("loginMsg").textContent = "Accès refusé"; return; }
+  const dj = (state.djs || []).find(d => d.id === user && d.pass === pass);
+
+  if(!dj){
+    document.getElementById("loginMsg").textContent = "Accès refusé";
+    return;
+  }
+
   currentDj = dj;
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("djPanel").classList.remove("hidden");
@@ -89,7 +156,7 @@ async function djLogin(){
 async function saveDjPhoto(){
   const state = await getState();
   const photo = document.getElementById("photoUrl").value.trim();
-  const dj = state.djs.find(d=>d.id===currentDj.id);
+  const dj = state.djs.find(d => d.id === currentDj.id);
   dj.photo = photo;
   currentDj.photo = photo;
   await saveState(state);
@@ -100,8 +167,9 @@ async function saveDjPhoto(){
 async function loadRequests(){
   const state = await getState();
   const box = document.getElementById("requestsList");
+  if(!box) return;
   box.innerHTML = "";
-  (state.requests || []).forEach((r,i)=>{
+  (state.requests || []).forEach((r) => {
     const div = document.createElement("div");
     div.className = "request";
     div.innerHTML = `<b>${r.clientName || "Client"}</b><br>${r.type}<br>${r.message}<br><small>${r.time || ""}</small>`;
@@ -109,10 +177,14 @@ async function loadRequests(){
   });
 }
 
-async function startAdminPage(){}
+function startAdminPage(){}
+
 async function adminLogin(){
   const pass = document.getElementById("adminPass").value;
-  if(pass !== "nashadmin"){ document.getElementById("adminMsg").textContent = "Accès refusé"; return; }
+  if(pass !== "nashadmin"){
+    document.getElementById("adminMsg").textContent = "Accès refusé";
+    return;
+  }
   document.getElementById("adminLoginBox").classList.add("hidden");
   document.getElementById("adminPanel").classList.remove("hidden");
   loadAdmin();
@@ -122,13 +194,16 @@ async function loadAdmin(){
   const state = await getState();
   const sel = document.getElementById("liveDjSelect");
   sel.innerHTML = "";
-  state.djs.forEach(d=>{
+
+  (state.djs || []).forEach(d => {
     const opt = document.createElement("option");
-    opt.value = d.id; opt.textContent = d.name;
-    if(d.id===state.liveDj) opt.selected = true;
+    opt.value = d.id;
+    opt.textContent = d.name;
+    if(d.id === state.liveDj) opt.selected = true;
     sel.appendChild(opt);
   });
-  document.getElementById("eventInput").value = state.eventName;
+
+  document.getElementById("eventInput").value = state.eventName || "";
   document.getElementById("descInput").value = state.eventDesc || "";
   document.getElementById("posterInput").value = state.posterUrl || "";
   loadDjs();
@@ -150,8 +225,13 @@ async function createDj(){
   const id = document.getElementById("newDjUser").value.trim().toLowerCase();
   const pass = document.getElementById("newDjPass").value.trim();
   const photo = document.getElementById("newDjPhoto").value.trim();
-  if(!name || !id || !pass){ alert("Nom, identifiant et mot de passe obligatoires"); return; }
-  state.djs.push({id,name,pass,photo});
+
+  if(!name || !id || !pass){
+    alert("Nom, identifiant et mot de passe obligatoires");
+    return;
+  }
+
+  state.djs.push({id, name, pass, photo});
   await saveState(state);
   alert("DJ créé ✅");
   loadAdmin();
@@ -162,7 +242,8 @@ async function loadDjs(){
   const box = document.getElementById("djList");
   if(!box) return;
   box.innerHTML = "";
-  state.djs.forEach(d=>{
+
+  (state.djs || []).forEach(d => {
     const div = document.createElement("div");
     div.className = "djrow";
     div.innerHTML = `<b>${d.name}</b><br>Identifiant: ${d.id}<br>${d.photo ? "Photo: OK" : "Photo: vide"}`;
